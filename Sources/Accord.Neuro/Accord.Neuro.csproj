@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectGuid>{179F3045-8757-4F4B-9508-F48327BA11E3}</ProjectGuid>
     <RootNamespace>Accord.Neuro</RootNamespace>
@@ -12,7 +12,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>Accord.snk</AssemblyOriginatorKeyFile>
     <OldToolsVersion>3.5</OldToolsVersion>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
@@ -27,9 +27,10 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
     <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
     <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <OutputPath>bin\Debug\</OutputPath>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
@@ -56,7 +57,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'NET45|AnyCPU'">
     <OutputPath>$(SolutionDir)..\Release\net45</OutputPath>
     <DefineConstants>TRACE;CODE_ANALYSIS;NET45</DefineConstants>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <DocumentationFile>$(SolutionDir)..\Release\net45\Accord.Neuro.XML</DocumentationFile>
     <CodeAnalysisLogFile>$(SolutionDir)..\Release\net45\Accord.Neuro.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
   </PropertyGroup>
@@ -132,6 +133,10 @@
       <Project>{F718E9A8-DB62-4785-8C49-4333A60D256A}</Project>
       <Name>Accord.Math</Name>
       <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Accord.OpenCL\Accord.OpenCL.fsproj">
+      <Project>{ed2d3f90-a20e-4df4-8bfb-31b44053d74e}</Project>
+      <Name>Accord.OpenCL</Name>
     </ProjectReference>
     <ProjectReference Include="..\Accord.Statistics\Accord.Statistics.csproj">
       <Project>{FD8101DD-C95D-42D6-AD44-AE01C25F2811}</Project>

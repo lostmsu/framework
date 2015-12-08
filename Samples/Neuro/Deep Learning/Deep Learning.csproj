@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -10,13 +10,16 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DeepLearning</RootNamespace>
     <AssemblyName>DeepLearning</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -27,6 +30,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -36,34 +40,42 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>framework.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Accord">
-      <HintPath>..\..\..\Release\net40\Accord.dll</HintPath>
+      <HintPath>..\..\..\Release\net45\Accord.dll</HintPath>
     </Reference>
     <Reference Include="Accord.Controls">
-      <HintPath>..\..\..\Release\net40\Accord.Controls.dll</HintPath>
+      <HintPath>..\..\..\Release\net45\Accord.Controls.dll</HintPath>
     </Reference>
     <Reference Include="Accord.Imaging">
-      <HintPath>..\..\..\Release\net40\Accord.Imaging.dll</HintPath>
+      <HintPath>..\..\..\Release\net45\Accord.Imaging.dll</HintPath>
     </Reference>
     <Reference Include="Accord.MachineLearning">
-      <HintPath>..\..\..\Release\net40\Accord.MachineLearning.dll</HintPath>
+      <HintPath>..\..\..\Release\net45\Accord.MachineLearning.dll</HintPath>
     </Reference>
     <Reference Include="Accord.Math">
-      <HintPath>..\..\..\Release\net40\Accord.Math.dll</HintPath>
+      <HintPath>..\..\..\Release\net45\Accord.Math.dll</HintPath>
     </Reference>
     <Reference Include="Accord.Neuro">
-      <HintPath>..\..\..\Release\net40\Accord.Neuro.dll</HintPath>
+      <HintPath>..\..\..\Debug\Accord.Neuro.dll</HintPath>
+    </Reference>
+    <Reference Include="Accord.OpenCL">
+      <HintPath>..\..\..\Debug\Accord.OpenCL.dll</HintPath>
     </Reference>
     <Reference Include="Accord.Statistics">
-      <HintPath>..\..\..\Release\net40\Accord.Statistics.dll</HintPath>
+      <HintPath>..\..\..\Release\net45\Accord.Statistics.dll</HintPath>
     </Reference>
     <Reference Include="MahApps.Metro">
       <HintPath>packages\MahApps.Metro.0.10.0.1\lib\net40\MahApps.Metro.dll</HintPath>
+    </Reference>
+    <Reference Include="PropertyChanged, Version=1.50.3.0, Culture=neutral, PublicKeyToken=ee3ee20bcf148ddd, processorArchitecture=MSIL">
+      <HintPath>packages\PropertyChanged.Fody.1.50.3\lib\dotnet\PropertyChanged.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -194,7 +206,19 @@
   <ItemGroup>
     <Resource Include="framework.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="FodyWeavers.xml" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="packages\Fody.1.29.2\build\dotnet\Fody.targets" Condition="Exists('packages\Fody.1.29.2\build\dotnet\Fody.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\Fody.1.29.2\build\dotnet\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Fody.1.29.2\build\dotnet\Fody.targets'))" />
+    <Error Condition="!Exists('packages\PropertyChanged.Fody.1.50.3\build\dotnet\PropertyChanged.Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\PropertyChanged.Fody.1.50.3\build\dotnet\PropertyChanged.Fody.targets'))" />
+  </Target>
+  <Import Project="packages\PropertyChanged.Fody.1.50.3\build\dotnet\PropertyChanged.Fody.targets" Condition="Exists('packages\PropertyChanged.Fody.1.50.3\build\dotnet\PropertyChanged.Fody.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
@@ -202,15 +226,8 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <Target Name="AfterCompile">
+  <!--<Target Name="AfterCompile">
     <NotifyPropertyWeaverMsBuildTask.WeavingTask />
   </Target>
-  <UsingTask TaskName="NotifyPropertyWeaverMsBuildTask.WeavingTask" AssemblyFile="$(ProjectDir)Tools\NotifyPropertyWeaverMsBuildTask.dll" />
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-  </Target>
+  <UsingTask TaskName="NotifyPropertyWeaverMsBuildTask.WeavingTask" AssemblyFile="$(ProjectDir)Tools\NotifyPropertyWeaverMsBuildTask.dll" />-->
 </Project>

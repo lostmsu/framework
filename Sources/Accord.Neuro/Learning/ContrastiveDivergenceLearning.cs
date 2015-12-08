@@ -22,22 +22,22 @@
 
 namespace Accord.Neuro.Learning
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Accord.Neuro.Layers;
-    using Accord.Neuro.Networks;
-    using Accord.Neuro.Neurons;
-    using Accord.Math;
-    using AForge.Neuro.Learning;
-    using Accord.Neuro.ActivationFunctions;
+	using System;
+	using System.Threading;
+	using System.Threading.Tasks;
+	using Accord.Neuro.Layers;
+	using Accord.Neuro.Networks;
+	using Accord.Neuro.Neurons;
+	using Accord.Math;
+	using AForge.Neuro.Learning;
+	using Accord.Neuro.ActivationFunctions;
 
 
-    /// <summary>
-    ///   Contrastive Divergence learning algorithm for Restricted Boltzmann Machines.
-    /// </summary>
-    /// 
-    public class ContrastiveDivergenceLearning : IUnsupervisedLearning, IDisposable
+	/// <summary>
+	///   Contrastive Divergence learning algorithm for Restricted Boltzmann Machines.
+	/// </summary>
+	/// 
+	public class ContrastiveDivergenceLearning : IUnsupervisedLearning, IDisposable
     {
 
         private double momentum = 0.9;
@@ -226,70 +226,29 @@ namespace Accord.Neuro.Learning
 
                     // 1. Compute a forward pass. The network is being
                     //    driven by data, so we will gather activations
-                    for (int j = 0; j < hidden.Neurons.Length; j++)
-                    {
-                        probability[j] = hidden.Neurons[j].Compute(observation);  // output probabilities
-                        activations[j] = hidden.Neurons[j].Generate(probability[j]); // state activations
-                    }
+                    ForwardPass(probability, observation, activations);
 
                     // 2. Reconstruct inputs from previous outputs
-                    for (int j = 0; j < visible.Neurons.Length; j++)
-                        reconstruction[j] = visible.Neurons[j].Compute(activations);
+                    ReconstructInputs(reconstruction, activations, probability);
 
 
-                    if (steps > 1)
-                    {
-                        // Perform Gibbs sampling
-                        double[] current = probability;
-                        for (int k = 0; k < steps - 1; k++)
-                        {
-                            for (int j = 0; j < probability.Length; j++)
-                                probability[j] = hidden.Neurons[j].Compute(current);
-                            for (int j = 0; j < reconstruction.Length; j++)
-                                reconstruction[j] = visible.Neurons[j].Compute(probability);
-                            current = reconstruction;
-                        }
-                    }
-
-
-                    // 3. Compute outputs for the reconstruction. The network
+	                // 3. Compute outputs for the reconstruction. The network
                     //    is now being driven by reconstructions, so we should
                     //    gather the output probabilities without sampling
-                    for (int j = 0; j < hidden.Neurons.Length; j++)
-                        reprobability[j] = hidden.Neurons[j].Compute(reconstruction);
+                    ComputeOutputsForReconstruction(reprobability, reconstruction);
 
 
 
                     // 4.1. Compute positive associations
-                    for (int k = 0; k < observation.Length; k++)
-                        for (int j = 0; j < probability.Length; j++)
-                            weightGradient[k][j] += observation[k] * probability[j];
-
-                    for (int j = 0; j < hiddenGradient.Length; j++)
-                        hiddenGradient[j] += probability[j];
-
-                    for (int j = 0; j < visibleGradient.Length; j++)
-                        visibleGradient[j] += observation[j];
+                    ComputePositiveAssociations(observation, probability, weightGradient, hiddenGradient, visibleGradient);
 
 
-                    // 4.2. Compute negative associations
-                    for (int k = 0; k < reconstruction.Length; k++)
-                        for (int j = 0; j < reprobability.Length; j++)
-                            weightGradient[k][j] -= reconstruction[k] * reprobability[j];
-
-                    for (int j = 0; j < reprobability.Length; j++)
-                        hiddenGradient[j] -= reprobability[j];
-
-                    for (int j = 0; j < reconstruction.Length; j++)
-                        visibleGradient[j] -= reconstruction[j];
+	                // 4.2. Compute negative associations
+                    ComputeNegativeAssociations(reconstruction, reprobability, weightGradient, hiddenGradient, visibleGradient);
 
 
-                    // Compute current error
-                    for (int j = 0; j < observation.Length; j++)
-                    {
-                        double e = observation[j] - reconstruction[j];
-                        partial.ErrorSumOfSquares += e * e;
-                    }
+	                // Compute current error
+                    ComputeError(observation, reconstruction, partial);
 
 #if !NET35
                     return partial; // Report partial solution
@@ -327,7 +286,89 @@ namespace Accord.Neuro.Learning
             return errors;
         }
 
-        /// <summary>
+	    static void ComputeError(double[] observation, double[] reconstruction, ParallelStorage partial)
+	    {
+		    for (int j = 0; j < observation.Length; j++)
+		    {
+			    double e = observation[j] - reconstruction[j];
+			    partial.ErrorSumOfSquares += e*e;
+		    }
+	    }
+
+	    static void ComputeNegativeAssociations(double[] reconstruction, double[] reprobability, double[][] weightGradient,
+		    double[] hiddenGradient, double[] visibleGradient)
+	    {
+		    for (int k = 0; k < reconstruction.Length; k++)
+		    {
+			    for (int j = 0; j < reprobability.Length; j++)
+				    weightGradient[k][j] -= reconstruction[k]*reprobability[j];
+		    }
+
+		    for (int j = 0; j < reprobability.Length; j++)
+			    hiddenGradient[j] -= reprobability[j];
+
+		    for (int j = 0; j < reconstruction.Length; j++)
+			    visibleGradient[j] -= reconstruction[j];
+	    }
+
+		static readonly ThreadLocal<Accord.OpenCL.ContrastiveDivergenceLearning> openCl =
+			new ThreadLocal<OpenCL.ContrastiveDivergenceLearning>(
+				() => new Accord.OpenCL.ContrastiveDivergenceLearning());
+
+		static void ComputePositiveAssociations(double[] observation, double[] probability, double[][] weightGradient,
+		    double[] hiddenGradient, double[] visibleGradient)
+	    {
+		    //for (int k = 0; k < observation.Length; k++)
+		    //{
+			   // for (int j = 0; j < probability.Length; j++)
+				  //  weightGradient[k][j] += observation[k]*probability[j];
+		    //}
+
+		    //for (int j = 0; j < hiddenGradient.Length; j++)
+			   // hiddenGradient[j] += probability[j];
+
+		    //for (int j = 0; j < visibleGradient.Length; j++)
+			   // visibleGradient[j] += observation[j];
+			openCl.Value.ComputePositiveAssociations(observation, probability, weightGradient, hiddenGradient, visibleGradient);
+	    }
+
+	    void ComputeOutputsForReconstruction(double[] reprobability, double[] reconstruction)
+	    {
+		    for (int j = 0; j < hidden.Neurons.Length; j++)
+			    reprobability[j] = hidden.Neurons[j].Compute(reconstruction);
+	    }
+
+	    void ReconstructInputs(double[] reconstruction, double[] activations, double[] probability)
+	    {
+		    for (int j = 0; j < visible.Neurons.Length; j++)
+			    reconstruction[j] = visible.Neurons[j].Compute(activations);
+
+
+		    if (steps > 1)
+		    {
+			    // Perform Gibbs sampling
+			    double[] current = probability;
+			    for (int k = 0; k < steps - 1; k++)
+			    {
+				    for (int j = 0; j < probability.Length; j++)
+					    probability[j] = hidden.Neurons[j].Compute(current);
+				    for (int j = 0; j < reconstruction.Length; j++)
+					    reconstruction[j] = visible.Neurons[j].Compute(probability);
+				    current = reconstruction;
+			    }
+		    }
+	    }
+
+	    void ForwardPass(double[] probability, double[] observation, double[] activations)
+	    {
+		    for (int j = 0; j < hidden.Neurons.Length; j++)
+		    {
+			    probability[j] = hidden.Neurons[j].Compute(observation); // output probabilities
+			    activations[j] = hidden.Neurons[j].Generate(probability[j]); // state activations
+		    }
+	    }
+
+	    /// <summary>
         ///   Computes the reconstruction error of the current layer.
         /// </summary>
         /// 
